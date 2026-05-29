@@ -1,29 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AppShell } from "@/components/app/AppShell";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "MistakeDNA AI — Early Intervention OS for Schools" },
+      { name: "description", content: "AI-powered platform that predicts learning failure before it happens and guides teachers, students, parents, and schools to the fastest intervention." },
+      { property: "og:title", content: "MistakeDNA AI" },
+      { property: "og:description", content: "Predict learning failure before it happens." },
     ],
   }),
-  component: Index,
+  component: () => <AppShell />,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
