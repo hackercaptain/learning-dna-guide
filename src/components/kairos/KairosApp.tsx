@@ -4,6 +4,7 @@ import {
   Brain, AlertCircle, CheckCircle2, Send, Loader2, RotateCcw, Sparkles,
   BarChart3, Users, Clock, Target, GraduationCap, BookOpen, ArrowRight, Flame, TrendingUp,
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
