@@ -352,15 +352,45 @@ function StudentView() {
 }
 
 /* ───────────────── Teacher Dashboard ───────────────── */
-function TeacherDashboard() {
-  const metrics = useMemo(() => ({
-    submissions: 184,
-    avgTime: "1m 42s",
-    activeGaps: GAPS.filter((g) => g.severity !== "low").length,
-  }), []);
+const RANGE_METRICS: Record<DateRange, { submissions: number; submissionsDelta: string; avgTime: string; avgDelta: string }> = {
+  today: { submissions: 42,  submissionsDelta: "+42 today",      avgTime: "1m 28s", avgDelta: "−14s vs yesterday" },
+  week:  { submissions: 184, submissionsDelta: "+24 today",      avgTime: "1m 42s", avgDelta: "−12s vs last week" },
+  month: { submissions: 612, submissionsDelta: "+184 this week", avgTime: "1m 51s", avgDelta: "−6s vs last month" },
+};
 
-  const sorted = [...GAPS].sort((a, b) => b.struggling - a.struggling);
+function TeacherDashboard() {
+  const [subject, setSubject] = useState<Subject>("all");
+  const [range, setRange] = useState<DateRange>("week");
+
+  const filtered = useMemo<Gap[]>(() => {
+    return ALL_GAPS
+      .filter((g) => subject === "all" || g.subject === subject)
+      .map((g) => {
+        const factor = g.window[range];
+        const struggling = Math.max(0, Math.round(g.struggling * factor));
+        const ratio = struggling / g.total;
+        const severity: Gap["severity"] =
+          ratio >= 0.55 ? "high" : ratio >= 0.3 ? "med" : "low";
+        return { ...g, struggling, severity };
+      })
+      .filter((g) => g.struggling > 0);
+  }, [subject, range]);
+
+  const sorted = [...filtered].sort((a, b) => b.struggling - a.struggling);
   const topGap = sorted[0];
+
+  const rangeBase = RANGE_METRICS[range];
+  const subjectScale = subject === "all" ? 1 : 0.32;
+  const metrics = {
+    submissions: Math.round(rangeBase.submissions * subjectScale),
+    submissionsDelta: rangeBase.submissionsDelta,
+    avgTime: rangeBase.avgTime,
+    avgDelta: rangeBase.avgDelta,
+    activeGaps: sorted.filter((g) => g.severity !== "low").length,
+  };
+
+  const heatmapCaption =
+    `${sorted.reduce((s, g) => s + g.total, 0)} student responses · ${SUBJECT_LABEL[subject]} · ${RANGE_LABEL[range]}`;
 
   return (
     <div className="space-y-7">
@@ -376,43 +406,65 @@ function TeacherDashboard() {
         </p>
       </div>
 
+      <FilterBar
+        subject={subject}
+        range={range}
+        onSubject={(s) => { setSubject(s); toast(`Filter · ${SUBJECT_LABEL[s]}`); }}
+        onRange={(r) => { setRange(r); toast(`Range · ${RANGE_LABEL[r]}`); }}
+      />
+
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MetricCard label="Total Submissions" value={metrics.submissions} delta="+24 today" icon={Users} tone="primary" />
-        <MetricCard label="Avg. Response Time" value={metrics.avgTime} delta="−12s vs yesterday" icon={Clock} tone="info" />
-        <MetricCard label="Active Learning Gaps" value={metrics.activeGaps} delta={`${topGap.concept}`} icon={AlertCircle} tone="warning" />
+        <MetricCard label="Total Submissions"    value={metrics.submissions} delta={metrics.submissionsDelta} icon={Users} tone="primary" />
+        <MetricCard label="Avg. Response Time"   value={metrics.avgTime}     delta={metrics.avgDelta}         icon={Clock} tone="info" />
+        <MetricCard label="Active Learning Gaps" value={metrics.activeGaps}  delta={topGap?.concept ?? "All clear"} icon={AlertCircle} tone="warning" />
       </div>
 
       {/* Top gap callout */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[2rem] border-2 border-warning/40 bg-warning/5 p-5 sm:p-6 shadow-soft"
-      >
-        <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-warning/30 blur-3xl pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="h-14 w-14 rounded-full bg-warning/20 text-warning grid place-items-center shrink-0">
-            <Flame className="h-7 w-7" />
-          </div>
-          <div className="flex-1">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-warning font-semibold">Biggest gap right now</div>
-            <div className="mt-1 font-display text-2xl">{topGap.concept}</div>
-            <div className="text-sm text-muted-foreground mt-1">
-              <b className="text-foreground">{topGap.struggling} of {topGap.total}</b> students struggling · {topGap.note}
-            </div>
-          </div>
-          <button
-            onClick={() => toast.success("Recap added to tomorrow's plan", { description: topGap.concept })}
-            className="inline-flex items-center justify-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95 whitespace-nowrap"
+      <AnimatePresence mode="wait">
+        {topGap ? (
+          <motion.div
+            key={`${subject}-${range}-${topGap.concept}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="relative overflow-hidden rounded-[2rem] border-2 border-warning/40 bg-warning/5 p-5 sm:p-6 shadow-soft"
           >
-            Plan recap <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      </motion.div>
+            <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-warning/30 blur-3xl pointer-events-none" />
+            <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="h-14 w-14 rounded-full bg-warning/20 text-warning grid place-items-center shrink-0">
+                <Flame className="h-7 w-7" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-warning font-semibold">
+                  Biggest gap · {SUBJECT_LABEL[subject]} · {RANGE_LABEL[range]}
+                </div>
+                <div className="mt-1 font-display text-2xl">{topGap.concept}</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  <b className="text-foreground">{topGap.struggling} of {topGap.total}</b> students struggling · {topGap.note}
+                </div>
+              </div>
+              <button
+                onClick={() => toast.success("Recap added to tomorrow's plan", { description: topGap.concept })}
+                className="inline-flex items-center justify-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95 whitespace-nowrap"
+              >
+                Plan recap <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="rounded-[2rem] glass-strong p-8 text-center text-sm text-muted-foreground"
+          >
+            No gaps surfaced for <b className="text-foreground">{SUBJECT_LABEL[subject]}</b> · {RANGE_LABEL[range]}.
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Gap distribution pie */}
-      <GapPieChart />
-
+      <GapPieChart data={sorted} subject={subject} range={range} />
 
       {/* Gap list */}
       <div className="rounded-[2rem] glass-strong overflow-hidden shadow-soft">
@@ -420,7 +472,7 @@ function TeacherDashboard() {
           <BarChart3 className="h-4 w-4 text-primary" />
           <div>
             <div className="font-medium text-sm">Concept gap heatmap</div>
-            <div className="text-xs text-muted-foreground">Aggregated across 28 students · Photosynthesis unit</div>
+            <div className="text-xs text-muted-foreground">{heatmapCaption}</div>
           </div>
           <span className="ml-auto text-[11px] text-muted-foreground inline-flex items-center gap-1">
             <TrendingUp className="h-3 w-3" /> Updated 2 min ago
@@ -428,74 +480,148 @@ function TeacherDashboard() {
         </div>
 
         <div className="divide-y divide-border/60">
-          {sorted.map((g, i) => {
-            const pct = Math.round((g.struggling / g.total) * 100);
-            const tone =
-              g.severity === "high" ? "warning" :
-              g.severity === "med"  ? "info"    : "success";
+          <AnimatePresence initial={false}>
+            {sorted.map((g, i) => {
+              const pct = Math.round((g.struggling / g.total) * 100);
+              const tone =
+                g.severity === "high" ? "warning" :
+                g.severity === "med"  ? "info"    : "success";
+              return (
+                <motion.div
+                  key={`${subject}-${range}-${g.concept}`}
+                  layout
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ delay: i * 0.03 }}
+                  className={cn(
+                    "p-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 hover:bg-primary/5 transition-colors",
+                    i === 0 && "bg-warning/5"
+                  )}
+                >
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-display text-base font-semibold">{g.concept}</span>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{SUBJECT_LABEL[g.subject]}</span>
+                      <span className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                        tone === "warning" && "bg-warning/15 text-warning",
+                        tone === "info" && "bg-info/15 text-info",
+                        tone === "success" && "bg-success/15 text-success",
+                      )}>
+                        {g.severity === "high" ? "Critical" : g.severity === "med" ? "Watch" : "Solid"}
+                      </span>
+                      {i === 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-warning text-warning-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          <Flame className="h-3 w-3" /> Focus tomorrow
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{g.note}</p>
+                    <div className="mt-3 flex items-center gap-3">
+                      <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ delay: 0.1 + i * 0.04, duration: 0.7, ease: "easeOut" }}
+                          className={cn(
+                            "h-full rounded-full",
+                            tone === "warning" && "bg-warning",
+                            tone === "info"    && "bg-info",
+                            tone === "success" && "bg-success",
+                          )}
+                        />
+                      </div>
+                      <span className="text-xs font-mono text-muted-foreground w-16 text-right">
+                        {g.struggling}/{g.total} · {pct}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex sm:flex-col items-end gap-2 sm:justify-center">
+                    <button
+                      onClick={() => toast.success("Mini-lesson assigned", { description: g.concept })}
+                      className="text-xs px-4 py-2 rounded-full border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors whitespace-nowrap"
+                    >
+                      Assign mini-lesson
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────── Filter bar ───────── */
+function FilterBar({
+  subject, range, onSubject, onRange,
+}: {
+  subject: Subject; range: DateRange;
+  onSubject: (s: Subject) => void; onRange: (r: DateRange) => void;
+}) {
+  const subjects: Subject[] = ["all", "biology", "chemistry", "physics", "math"];
+  const ranges: DateRange[] = ["today", "week", "month"];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+      className="rounded-[1.75rem] glass-strong p-3 sm:p-4 shadow-soft flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-5"
+    >
+      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground shrink-0">
+        <Filter className="h-3.5 w-3.5 text-primary" /> Filters
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1"><BookOpen className="h-3 w-3" /> Subject</span>
+        <div className="inline-flex flex-wrap gap-1 rounded-full bg-muted/40 p-1">
+          {subjects.map((s) => {
+            const active = subject === s;
             return (
-              <motion.div
-                key={g.concept}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
+              <button
+                key={s}
+                onClick={() => onSubject(s)}
                 className={cn(
-                  "p-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 hover:bg-primary/5 transition-colors",
-                  i === 0 && "bg-warning/5"
+                  "relative px-3 py-1.5 text-xs rounded-full transition-colors",
+                  active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-display text-base font-semibold">{g.concept}</span>
-                    <span className={cn(
-                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                      tone === "warning" && "bg-warning/15 text-warning",
-                      tone === "info" && "bg-info/15 text-info",
-                      tone === "success" && "bg-success/15 text-success",
-                    )}>
-                      {g.severity === "high" ? "Critical" : g.severity === "med" ? "Watch" : "Solid"}
-                    </span>
-                    {i === 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-warning text-warning-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                        <Flame className="h-3 w-3" /> Focus tomorrow
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{g.note}</p>
-                  <div className="mt-3 flex items-center gap-3">
-                    <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ delay: 0.1 + i * 0.05, duration: 0.7, ease: "easeOut" }}
-                        className={cn(
-                          "h-full rounded-full",
-                          tone === "warning" && "bg-warning",
-                          tone === "info"    && "bg-info",
-                          tone === "success" && "bg-success",
-                        )}
-                      />
-                    </div>
-                    <span className="text-xs font-mono text-muted-foreground w-16 text-right">
-                      {g.struggling}/{g.total} · {pct}%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex sm:flex-col items-end gap-2 sm:justify-center">
-                  <button
-                    onClick={() => toast.success("Mini-lesson assigned", { description: g.concept })}
-                    className="text-xs px-4 py-2 rounded-full border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors whitespace-nowrap"
-                  >
-                    Assign mini-lesson
-                  </button>
-                </div>
-              </motion.div>
+                {active && (
+                  <motion.span layoutId="subject-pill" className="absolute inset-0 rounded-full gradient-primary shadow-glow" transition={{ type: "spring", stiffness: 380, damping: 30 }} />
+                )}
+                <span className="relative">{SUBJECT_LABEL[s]}</span>
+              </button>
             );
           })}
         </div>
       </div>
-    </div>
+
+      <div className="flex items-center gap-2 flex-wrap lg:ml-auto">
+        <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> Range</span>
+        <div className="inline-flex gap-1 rounded-full bg-muted/40 p-1">
+          {ranges.map((r) => {
+            const active = range === r;
+            return (
+              <button
+                key={r}
+                onClick={() => onRange(r)}
+                className={cn(
+                  "relative px-3 py-1.5 text-xs rounded-full transition-colors",
+                  active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {active && (
+                  <motion.span layoutId="range-pill" className="absolute inset-0 rounded-full gradient-primary shadow-glow" transition={{ type: "spring", stiffness: 380, damping: 30 }} />
+                )}
+                <span className="relative">{RANGE_LABEL[r]}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
