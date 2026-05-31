@@ -660,12 +660,13 @@ const PIE_COLORS = [
   "var(--warning)", "var(--risk)", "var(--info)", "var(--primary)", "var(--success)", "var(--dna-6)",
 ];
 
-function GapPieChart() {
-  const data = GAPS.map((g) => ({ name: g.concept, value: g.struggling, severity: g.severity }));
-  const total = data.reduce((s, d) => s + d.value, 0);
+function GapPieChart({ data: gaps, subject, range }: { data: Gap[]; subject: Subject; range: DateRange }) {
+  const data = gaps.map((g) => ({ name: g.concept, value: g.struggling, severity: g.severity }));
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
 
   return (
     <motion.div
+      key={`${subject}-${range}-pie`}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
@@ -673,13 +674,14 @@ function GapPieChart() {
     >
       <div>
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-[11px] uppercase tracking-[0.18em] font-semibold">
-          <BarChart3 className="h-3 w-3" /> Distribution
+          <BarChart3 className="h-3 w-3" /> {SUBJECT_LABEL[subject]} · {RANGE_LABEL[range]}
         </div>
         <h3 className="mt-3 font-display text-2xl leading-snug">Where the class is losing the most students</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Each slice represents the share of all struggling responses across concepts in the Photosynthesis unit.
+          Each slice represents the share of struggling responses across concepts in this filter.
           Larger slices = bigger teaching opportunities.
         </p>
+
 
         <div className="mt-5 space-y-1.5">
           {data.map((d, i) => {
