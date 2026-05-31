@@ -4,6 +4,7 @@ import {
   Brain, AlertCircle, CheckCircle2, Send, Loader2, RotateCcw, Sparkles,
   BarChart3, Users, Clock, Target, GraduationCap, BookOpen, ArrowRight, Flame, TrendingUp,
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -147,8 +148,8 @@ function StudentView() {
         transition={{ layout: { duration: 0.45, type: "spring", stiffness: 120, damping: 20 } }}
         className="relative mx-auto max-w-3xl"
       >
-        <div className="absolute -inset-px rounded-3xl gradient-primary opacity-30 blur-2xl pointer-events-none" />
-        <div className="relative rounded-3xl glass-strong overflow-hidden">
+        <div className="absolute -inset-1 rounded-[2.5rem] gradient-primary opacity-40 blur-3xl pointer-events-none" />
+        <div className="relative rounded-[2.5rem] glass-strong overflow-hidden shadow-[0_30px_80px_-20px_oklch(0.62_0.24_277/0.45),0_10px_30px_-10px_oklch(0_0_0/0.5)]">
           {/* Question */}
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -170,7 +171,7 @@ function StudentView() {
                 disabled={state === "loading"}
                 rows={4}
                 placeholder="Type your reasoning here…"
-                className="mt-2 w-full rounded-2xl border border-border/60 bg-card/60 px-4 py-3.5 text-[15px] leading-relaxed outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/15 transition-all resize-none placeholder:text-muted-foreground/60"
+                className="mt-2 w-full rounded-3xl border border-border/60 bg-card/60 px-5 py-4 text-[15px] leading-relaxed outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/15 transition-all resize-none placeholder:text-muted-foreground/60"
               />
               <div className="mt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
@@ -180,7 +181,7 @@ function StudentView() {
                 <button
                   onClick={submit}
                   disabled={state === "loading"}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary text-primary-foreground font-medium px-5 py-3 text-sm shadow-glow hover:opacity-95 disabled:opacity-60 transition-opacity"
+                  className="inline-flex items-center justify-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95 disabled:opacity-60 transition-opacity"
                 >
                   {state === "loading" ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing…</>
@@ -223,14 +224,15 @@ function StudentView() {
           </AnimatePresence>
 
           {/* Feedback */}
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {state === "gap" && (
               <motion.div
                 key="gap"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="border-t-2 border-warning/50 bg-warning/5"
+                initial={{ opacity: 0, y: -32, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -16, height: 0 }}
+                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], opacity: { duration: 0.4, delay: 0.1 } }}
+                className="border-t-2 border-warning/50 bg-warning/5 overflow-hidden"
               >
                 <div className="p-6 sm:p-8 space-y-5">
                   <div className="flex flex-wrap items-center gap-2">
@@ -243,7 +245,7 @@ function StudentView() {
 
                   <p className="text-[15px] leading-relaxed">{SAMPLE_QUESTION.supportive}</p>
 
-                  <div className="rounded-2xl border border-warning/30 bg-card/50 p-4">
+                  <div className="rounded-3xl border border-warning/30 bg-card/50 p-4">
                     <div className="flex items-center gap-2 text-xs font-medium text-warning">
                       <Sparkles className="h-3.5 w-3.5" />
                       Supportive hint
@@ -256,13 +258,13 @@ function StudentView() {
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <button
                       onClick={reset}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary text-primary-foreground font-medium px-5 py-3 text-sm shadow-glow hover:opacity-95"
+                      className="inline-flex items-center justify-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95"
                     >
                       <RotateCcw className="h-4 w-4" /> Try again
                     </button>
                     <button
                       onClick={() => toast.success("Sent to your teacher", { description: "Mrs. Sharma will see this in tomorrow's recap." })}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 px-5 py-3 text-sm font-medium hover:bg-muted/50"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-border/60 px-6 py-3 text-sm font-medium hover:bg-muted/50"
                     >
                       Ask for help <ArrowRight className="h-4 w-4" />
                     </button>
@@ -274,10 +276,11 @@ function StudentView() {
             {state === "correct" && (
               <motion.div
                 key="correct"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="border-t-2 border-success/50 bg-success/5"
+                initial={{ opacity: 0, y: -32, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -16, height: 0 }}
+                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], opacity: { duration: 0.4, delay: 0.1 } }}
+                className="border-t-2 border-success/50 bg-success/5 overflow-hidden"
               >
                 <div className="p-6 sm:p-8 space-y-4">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 text-success px-3 py-1 text-[11px] font-semibold uppercase tracking-wider">
@@ -287,7 +290,7 @@ function StudentView() {
                     Excellent — you captured the role of chloroplasts and the core chemistry. Ready for a tougher one?
                   </p>
                   <div className="flex gap-2">
-                    <button onClick={reset} className="inline-flex items-center gap-2 rounded-xl gradient-primary text-primary-foreground font-medium px-5 py-3 text-sm shadow-glow hover:opacity-95">
+                    <button onClick={reset} className="inline-flex items-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95">
                       Next question <ArrowRight className="h-4 w-4" />
                     </button>
                   </div>
@@ -346,11 +349,11 @@ function TeacherDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl border-2 border-warning/40 bg-warning/5 p-5 sm:p-6"
+        className="relative overflow-hidden rounded-[2rem] border-2 border-warning/40 bg-warning/5 p-5 sm:p-6 shadow-soft"
       >
         <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-warning/30 blur-3xl pointer-events-none" />
         <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-warning/20 text-warning grid place-items-center shrink-0">
+          <div className="h-14 w-14 rounded-full bg-warning/20 text-warning grid place-items-center shrink-0">
             <Flame className="h-7 w-7" />
           </div>
           <div className="flex-1">
@@ -362,15 +365,19 @@ function TeacherDashboard() {
           </div>
           <button
             onClick={() => toast.success("Recap added to tomorrow's plan", { description: topGap.concept })}
-            className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary text-primary-foreground font-medium px-5 py-3 text-sm shadow-glow hover:opacity-95 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95 whitespace-nowrap"
           >
             Plan recap <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </motion.div>
 
+      {/* Gap distribution pie */}
+      <GapPieChart />
+
+
       {/* Gap list */}
-      <div className="rounded-3xl glass-strong overflow-hidden">
+      <div className="rounded-[2rem] glass-strong overflow-hidden shadow-soft">
         <div className="flex items-center gap-2 p-5 border-b border-border/60">
           <BarChart3 className="h-4 w-4 text-primary" />
           <div>
@@ -440,7 +447,7 @@ function TeacherDashboard() {
                 <div className="flex sm:flex-col items-end gap-2 sm:justify-center">
                   <button
                     onClick={() => toast.success("Mini-lesson assigned", { description: g.concept })}
-                    className="text-xs px-3 py-2 rounded-lg border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors whitespace-nowrap"
+                    className="text-xs px-4 py-2 rounded-full border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors whitespace-nowrap"
                   >
                     Assign mini-lesson
                   </button>
@@ -470,11 +477,11 @@ function MetricCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
-      className="relative rounded-2xl glass-strong p-5 overflow-hidden"
+      className="relative rounded-[1.75rem] glass-strong p-5 overflow-hidden shadow-soft"
     >
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground">{label}</div>
-        <div className={cn("h-9 w-9 rounded-xl grid place-items-center", t)}>
+        <div className={cn("h-9 w-9 rounded-full grid place-items-center", t)}>
           <Icon className="h-4 w-4" />
         </div>
       </div>
@@ -483,3 +490,80 @@ function MetricCard({
     </motion.div>
   );
 }
+
+/* ───────── Gap distribution pie chart ───────── */
+const PIE_COLORS = [
+  "var(--warning)", "var(--risk)", "var(--info)", "var(--primary)", "var(--success)", "var(--dna-6)",
+];
+
+function GapPieChart() {
+  const data = GAPS.map((g) => ({ name: g.concept, value: g.struggling, severity: g.severity }));
+  const total = data.reduce((s, d) => s + d.value, 0);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+      className="rounded-[2rem] glass-strong p-5 sm:p-6 shadow-soft grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-6 items-center"
+    >
+      <div>
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-[11px] uppercase tracking-[0.18em] font-semibold">
+          <BarChart3 className="h-3 w-3" /> Distribution
+        </div>
+        <h3 className="mt-3 font-display text-2xl leading-snug">Where the class is losing the most students</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Each slice represents the share of all struggling responses across concepts in the Photosynthesis unit.
+          Larger slices = bigger teaching opportunities.
+        </p>
+
+        <div className="mt-5 space-y-1.5">
+          {data.map((d, i) => {
+            const pct = Math.round((d.value / total) * 100);
+            return (
+              <div key={d.name} className="flex items-center gap-3 text-xs">
+                <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                <span className="flex-1 truncate text-foreground">{d.name}</span>
+                <span className="font-mono text-muted-foreground">{pct}%</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="h-[280px] sm:h-[320px] w-full">
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              innerRadius="55%"
+              outerRadius="88%"
+              paddingAngle={3}
+              stroke="var(--card)"
+              strokeWidth={3}
+              animationBegin={150}
+              animationDuration={900}
+            >
+              {data.map((_, i) => (
+                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                background: "color-mix(in oklab, var(--card) 92%, transparent)",
+                border: "1px solid var(--border)",
+                borderRadius: "14px",
+                fontSize: 12,
+                color: "var(--foreground)",
+              }}
+              formatter={(v: number, n: string) => [`${v} students (${Math.round((v / total) * 100)}%)`, n]}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </motion.div>
+  );
+}
+
