@@ -14,15 +14,20 @@ interface AppState {
   toggleAssistant: () => void;
 }
 
+const applyTheme = (t: "light" | "dark") => {
+  if (typeof document === "undefined") return;
+  const el = document.documentElement;
+  el.classList.toggle("dark", t === "dark");
+  el.classList.toggle("light", t === "light");
+};
+
 export const useApp = create<AppState>((set) => ({
   role: "teacher",
   setRole: (r) => set({ role: r, activeView: "overview" }),
-  theme: "light",
+  theme: "dark",
   toggleTheme: () => set((s) => {
     const next = s.theme === "light" ? "dark" : "light";
-    if (typeof document !== "undefined") {
-      document.documentElement.classList.toggle("dark", next === "dark");
-    }
+    applyTheme(next);
     return { theme: next };
   }),
   activeView: "overview",
