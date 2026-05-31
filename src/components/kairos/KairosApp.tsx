@@ -148,8 +148,8 @@ function StudentView() {
         transition={{ layout: { duration: 0.45, type: "spring", stiffness: 120, damping: 20 } }}
         className="relative mx-auto max-w-3xl"
       >
-        <div className="absolute -inset-px rounded-3xl gradient-primary opacity-30 blur-2xl pointer-events-none" />
-        <div className="relative rounded-3xl glass-strong overflow-hidden">
+        <div className="absolute -inset-1 rounded-[2.5rem] gradient-primary opacity-40 blur-3xl pointer-events-none" />
+        <div className="relative rounded-[2.5rem] glass-strong overflow-hidden shadow-[0_30px_80px_-20px_oklch(0.62_0.24_277/0.45),0_10px_30px_-10px_oklch(0_0_0/0.5)]">
           {/* Question */}
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -171,7 +171,7 @@ function StudentView() {
                 disabled={state === "loading"}
                 rows={4}
                 placeholder="Type your reasoning here…"
-                className="mt-2 w-full rounded-2xl border border-border/60 bg-card/60 px-4 py-3.5 text-[15px] leading-relaxed outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/15 transition-all resize-none placeholder:text-muted-foreground/60"
+                className="mt-2 w-full rounded-3xl border border-border/60 bg-card/60 px-5 py-4 text-[15px] leading-relaxed outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/15 transition-all resize-none placeholder:text-muted-foreground/60"
               />
               <div className="mt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
@@ -181,7 +181,7 @@ function StudentView() {
                 <button
                   onClick={submit}
                   disabled={state === "loading"}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary text-primary-foreground font-medium px-5 py-3 text-sm shadow-glow hover:opacity-95 disabled:opacity-60 transition-opacity"
+                  className="inline-flex items-center justify-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95 disabled:opacity-60 transition-opacity"
                 >
                   {state === "loading" ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing…</>
@@ -224,14 +224,15 @@ function StudentView() {
           </AnimatePresence>
 
           {/* Feedback */}
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {state === "gap" && (
               <motion.div
                 key="gap"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="border-t-2 border-warning/50 bg-warning/5"
+                initial={{ opacity: 0, y: -32, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -16, height: 0 }}
+                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], opacity: { duration: 0.4, delay: 0.1 } }}
+                className="border-t-2 border-warning/50 bg-warning/5 overflow-hidden"
               >
                 <div className="p-6 sm:p-8 space-y-5">
                   <div className="flex flex-wrap items-center gap-2">
@@ -244,7 +245,7 @@ function StudentView() {
 
                   <p className="text-[15px] leading-relaxed">{SAMPLE_QUESTION.supportive}</p>
 
-                  <div className="rounded-2xl border border-warning/30 bg-card/50 p-4">
+                  <div className="rounded-3xl border border-warning/30 bg-card/50 p-4">
                     <div className="flex items-center gap-2 text-xs font-medium text-warning">
                       <Sparkles className="h-3.5 w-3.5" />
                       Supportive hint
@@ -257,13 +258,13 @@ function StudentView() {
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <button
                       onClick={reset}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary text-primary-foreground font-medium px-5 py-3 text-sm shadow-glow hover:opacity-95"
+                      className="inline-flex items-center justify-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95"
                     >
                       <RotateCcw className="h-4 w-4" /> Try again
                     </button>
                     <button
                       onClick={() => toast.success("Sent to your teacher", { description: "Mrs. Sharma will see this in tomorrow's recap." })}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 px-5 py-3 text-sm font-medium hover:bg-muted/50"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-border/60 px-6 py-3 text-sm font-medium hover:bg-muted/50"
                     >
                       Ask for help <ArrowRight className="h-4 w-4" />
                     </button>
@@ -275,10 +276,11 @@ function StudentView() {
             {state === "correct" && (
               <motion.div
                 key="correct"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="border-t-2 border-success/50 bg-success/5"
+                initial={{ opacity: 0, y: -32, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -16, height: 0 }}
+                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], opacity: { duration: 0.4, delay: 0.1 } }}
+                className="border-t-2 border-success/50 bg-success/5 overflow-hidden"
               >
                 <div className="p-6 sm:p-8 space-y-4">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 text-success px-3 py-1 text-[11px] font-semibold uppercase tracking-wider">
@@ -288,7 +290,7 @@ function StudentView() {
                     Excellent — you captured the role of chloroplasts and the core chemistry. Ready for a tougher one?
                   </p>
                   <div className="flex gap-2">
-                    <button onClick={reset} className="inline-flex items-center gap-2 rounded-xl gradient-primary text-primary-foreground font-medium px-5 py-3 text-sm shadow-glow hover:opacity-95">
+                    <button onClick={reset} className="inline-flex items-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95">
                       Next question <ArrowRight className="h-4 w-4" />
                     </button>
                   </div>
