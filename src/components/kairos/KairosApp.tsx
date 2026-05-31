@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain, AlertCircle, CheckCircle2, Send, Loader2, RotateCcw, Sparkles,
   BarChart3, Users, Clock, Target, GraduationCap, BookOpen, ArrowRight, Flame, TrendingUp,
+  Filter, Calendar as CalendarIcon,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,8 @@ import { toast } from "sonner";
 
 type Mode = "student" | "teacher";
 type FeedbackState = "idle" | "loading" | "gap" | "correct";
+type Subject = "all" | "biology" | "chemistry" | "physics" | "math";
+type DateRange = "today" | "week" | "month";
 
 const SAMPLE_QUESTION = {
   subject: "Biology · Grade 8",
@@ -20,14 +23,49 @@ const SAMPLE_QUESTION = {
     "You're close! Your answer mentions sunlight, but it's missing the role of chloroplasts — the tiny structures inside plant cells where photosynthesis actually happens.",
 };
 
-const GAPS = [
-  { concept: "Chloroplast Function", struggling: 22, total: 28, severity: "high" as const, note: "Most-missed concept this week — recommend a 10-min recap." },
-  { concept: "Light-dependent Reactions", struggling: 18, total: 28, severity: "high" as const, note: "Students confuse inputs and outputs." },
-  { concept: "Calvin Cycle Steps", struggling: 14, total: 28, severity: "med" as const, note: "Order of steps unclear in 50% of responses." },
-  { concept: "Role of Chlorophyll", struggling: 10, total: 28, severity: "med" as const, note: "Often confused with chloroplast." },
-  { concept: "Glucose vs Oxygen Output", struggling: 6, total: 28, severity: "low" as const, note: "Mostly understood — keep reinforcing." },
-  { concept: "Stomata & Gas Exchange", struggling: 4, total: 28, severity: "low" as const, note: "Strong area." },
+type Gap = {
+  concept: string;
+  struggling: number;
+  total: number;
+  severity: "high" | "med" | "low";
+  note: string;
+  subject: Exclude<Subject, "all">;
+  // share of this gap attributable to each window (today / week / month)
+  window: { today: number; week: number; month: number };
+};
+
+const ALL_GAPS: Gap[] = [
+  // Biology — Photosynthesis unit
+  { concept: "Chloroplast Function",        struggling: 22, total: 28, severity: "high", note: "Most-missed concept this week — recommend a 10-min recap.", subject: "biology",   window: { today: 0.35, week: 1, month: 1 } },
+  { concept: "Light-dependent Reactions",   struggling: 18, total: 28, severity: "high", note: "Students confuse inputs and outputs.",                          subject: "biology",   window: { today: 0.30, week: 1, month: 1 } },
+  { concept: "Calvin Cycle Steps",          struggling: 14, total: 28, severity: "med",  note: "Order of steps unclear in 50% of responses.",                   subject: "biology",   window: { today: 0.25, week: 0.85, month: 1 } },
+  { concept: "Role of Chlorophyll",         struggling: 10, total: 28, severity: "med",  note: "Often confused with chloroplast.",                              subject: "biology",   window: { today: 0.20, week: 0.7, month: 1 } },
+  { concept: "Glucose vs Oxygen Output",    struggling: 6,  total: 28, severity: "low",  note: "Mostly understood — keep reinforcing.",                         subject: "biology",   window: { today: 0.15, week: 0.6, month: 1 } },
+  { concept: "Stomata & Gas Exchange",      struggling: 4,  total: 28, severity: "low",  note: "Strong area.",                                                  subject: "biology",   window: { today: 0.1,  week: 0.5, month: 1 } },
+  // Chemistry — Bonding & Reactions
+  { concept: "Ionic vs Covalent Bonding",   struggling: 19, total: 26, severity: "high", note: "Students mix up electron transfer vs sharing.",                 subject: "chemistry", window: { today: 0.4,  week: 1, month: 1 } },
+  { concept: "Balancing Equations",         struggling: 15, total: 26, severity: "high", note: "Coefficient placement is the recurring error.",                 subject: "chemistry", window: { today: 0.3,  week: 0.9, month: 1 } },
+  { concept: "Mole Concept",                struggling: 11, total: 26, severity: "med",  note: "Unit conversion gaps persist.",                                 subject: "chemistry", window: { today: 0.2,  week: 0.75, month: 1 } },
+  { concept: "Acids, Bases & pH",           struggling: 5,  total: 26, severity: "low",  note: "Strong — only edge cases missed.",                              subject: "chemistry", window: { today: 0.15, week: 0.6, month: 1 } },
+  // Physics — Motion & Forces
+  { concept: "Newton's Third Law",          struggling: 17, total: 24, severity: "high", note: "Action–reaction pairs misidentified.",                          subject: "physics",   window: { today: 0.35, week: 1, month: 1 } },
+  { concept: "Free-body Diagrams",          struggling: 13, total: 24, severity: "med",  note: "Friction direction confuses many.",                             subject: "physics",   window: { today: 0.25, week: 0.85, month: 1 } },
+  { concept: "Projectile Motion",           struggling: 9,  total: 24, severity: "med",  note: "Independence of axes not internalized.",                        subject: "physics",   window: { today: 0.2,  week: 0.7, month: 1 } },
+  { concept: "Units & Dimensions",          struggling: 4,  total: 24, severity: "low",  note: "Solid baseline.",                                               subject: "physics",   window: { today: 0.1,  week: 0.5, month: 1 } },
+  // Math — Algebra
+  { concept: "Quadratic Factoring",         struggling: 20, total: 30, severity: "high", note: "Sign errors dominate.",                                         subject: "math",      window: { today: 0.4,  week: 1, month: 1 } },
+  { concept: "Word Problems → Equations",   struggling: 16, total: 30, severity: "high", note: "Translation step is the bottleneck.",                           subject: "math",      window: { today: 0.3,  week: 0.9, month: 1 } },
+  { concept: "Exponent Rules",              struggling: 12, total: 30, severity: "med",  note: "Negative exponents confuse half the class.",                    subject: "math",      window: { today: 0.25, week: 0.8, month: 1 } },
+  { concept: "Linear Inequalities",         struggling: 6,  total: 30, severity: "low",  note: "Mostly mastered.",                                              subject: "math",      window: { today: 0.15, week: 0.6, month: 1 } },
 ];
+
+const SUBJECT_LABEL: Record<Subject, string> = {
+  all: "All subjects", biology: "Biology", chemistry: "Chemistry", physics: "Physics", math: "Math",
+};
+const RANGE_LABEL: Record<DateRange, string> = {
+  today: "Today", week: "This week", month: "This month",
+};
+
 
 export function KairosApp() {
   const [mode, setMode] = useState<Mode>("student");
