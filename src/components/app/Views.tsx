@@ -18,6 +18,7 @@ import {
 } from "@/data/mockData";
 import { useApp } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const C = {
   primary: "oklch(0.52 0.21 273)",
@@ -127,7 +128,7 @@ export function TeacherOverview() {
                 <div className="text-xs text-muted-foreground">{i.action}</div>
               </div>
               <Pill tone={i.urgency === "high" ? "risk" : i.urgency === "med" ? "warning" : "success"}>{i.urgency}</Pill>
-              <button className="text-xs px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground">Apply</button>
+              <button onClick={() => toast.success(`Intervention applied`, { description: `${i.action} → ${i.student}` })} className="text-xs px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground hover:opacity-90 transition-opacity">Apply</button>
             </motion.div>
           ))}
         </div>
