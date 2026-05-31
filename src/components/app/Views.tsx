@@ -482,7 +482,7 @@ export function UploadZone() {
   };
   return (
     <div className="space-y-6">
-      <Hero eyebrow="Scan & Ingest" title={<>Drop OMR sheets. <span className="text-gradient">We do the rest.</span></>} subtitle="OCR → MistakeDNA extraction → dashboards update instantly." />
+      <Hero eyebrow="Scan & Ingest" title={<>Drop OMR sheets. <span className="text-gradient">We do the rest.</span></>} subtitle="OCR → Mistake DNA extraction → dashboards update instantly." />
       <Card>
         <div className="p-6">
           <button onClick={start} className="w-full rounded-2xl border-2 border-dashed border-border hover:border-primary/50 p-10 grid place-items-center text-center transition-colors">
@@ -496,7 +496,7 @@ export function UploadZone() {
               {[
                 { key: "scan", label: "Scanning sheets…", icon: FileScan },
                 { key: "ocr", label: "OCR processing…", icon: Loader2 },
-                { key: "dna", label: "Extracting MistakeDNA…", icon: Brain },
+                { key: "dna", label: "Extracting Mistake DNA…", icon: Brain },
                 { key: "done", label: "Dashboards updated", icon: CheckCircle2 },
               ].map(({ key, label, icon: Icon }, i) => {
                 const order = ["scan","ocr","dna","done"];

@@ -64,8 +64,8 @@ export function Sidebar() {
             <span className="absolute -inset-1 rounded-2xl border border-primary/30 animate-pulse-ring" />
           </div>
           <div>
-            <div className="font-semibold leading-tight">MistakeDNA <span className="text-gradient">AI</span></div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Early Intervention OS</div>
+            <div className="font-display font-bold text-lg leading-none tracking-tight">Orbit<span className="text-gradient">.</span></div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-1">Early Intervention OS</div>
           </div>
         </div>
       </div>

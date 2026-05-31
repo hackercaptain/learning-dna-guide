@@ -1,4 +1,4 @@
-// Comprehensive mock data for MistakeDNA AI
+// Comprehensive mock data for Orbit
 export type Role = "teacher" | "student" | "parent" | "admin";
 
 export type MistakeType =

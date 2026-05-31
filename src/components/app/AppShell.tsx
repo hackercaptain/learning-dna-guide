@@ -83,7 +83,7 @@ export function AppShell() {
           </button>
           <div className="lg:hidden flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg gradient-primary grid place-items-center"><Brain className="h-4 w-4 text-primary-foreground" /></div>
-            <span className="font-semibold text-sm">MistakeDNA</span>
+            <span className="font-display font-bold text-base tracking-tight">Orbit</span>
           </div>
           <div className="hidden lg:block text-xs text-muted-foreground">
             <span className="capitalize">{role}</span> <span className="mx-1.5 opacity-40">/</span> <span className="text-foreground font-medium">{NAV_LABELS[activeView] ?? "Overview"}</span>
