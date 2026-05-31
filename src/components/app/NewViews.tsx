@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
   Inbox, Bell, Sparkles, Zap, Send, CheckCircle2, Clock, AlertTriangle, Filter,
   Flame, Trophy, Target, BookOpen, PlayCircle, ChevronRight, Activity, Hand, Waves,
