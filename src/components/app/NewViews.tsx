@@ -418,7 +418,7 @@ export function LivePulse() {
                   <div className="text-sm font-medium">{m.t}</div>
                   <div className="text-xs text-muted-foreground leading-relaxed">{m.d}</div>
                 </div>
-                <button className="text-[11px] px-2.5 py-1.5 rounded-lg gradient-primary text-primary-foreground font-medium whitespace-nowrap">{m.cta}</button>
+                <button onClick={() => toast.success(m.cta, { description: m.t })} className="text-[11px] px-2.5 py-1.5 rounded-lg gradient-primary text-primary-foreground font-medium whitespace-nowrap hover:opacity-90">{m.cta}</button>
               </motion.div>
             ))}
           </div>
