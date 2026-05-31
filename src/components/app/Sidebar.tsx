@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard, Users, Brain, Activity, Network, Upload, Sparkles,
   GraduationCap, User, Heart, Shield, Sun, Moon, Mic, ChevronRight,
-  Microscope, Waypoints, FlaskConical, MessagesSquare
+  Microscope, Waypoints, FlaskConical, MessagesSquare, Inbox, Flame, Radio
 } from "lucide-react";
 import { useApp } from "@/store/useAppStore";
 import type { Role } from "@/data/mockData";
@@ -18,6 +18,8 @@ const ROLES: { id: Role; label: string; icon: any; color: string }[] = [
 const NAV: Record<Role, { id: string; label: string; icon: any }[]> = {
   teacher: [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "inbox", label: "Smart Inbox", icon: Inbox },
+    { id: "pulse", label: "Live Classroom Pulse", icon: Radio },
     { id: "twin", label: "Classroom Digital Twin", icon: Network },
     { id: "risk", label: "Student Risk Table", icon: Activity },
     { id: "bridge", label: "Bridge Lesson AI", icon: Sparkles },
@@ -26,6 +28,7 @@ const NAV: Record<Role, { id: string; label: string; icon: any }[]> = {
   ],
   student: [
     { id: "overview", label: "My Learning DNA", icon: Brain },
+    { id: "plan", label: "Today's Plan", icon: Flame },
     { id: "mistakes", label: "Mistake DNA Report", icon: FlaskConical },
     { id: "future", label: "Future Failure Timeline", icon: Waypoints },
     { id: "peers", label: "AI Peer Circle", icon: Users },
@@ -33,12 +36,14 @@ const NAV: Record<Role, { id: string; label: string; icon: any }[]> = {
   ],
   parent: [
     { id: "overview", label: "Child Overview", icon: Heart },
+    { id: "inbox", label: "Teacher Inbox", icon: Inbox },
     { id: "gaps", label: "Concept Gaps", icon: Brain },
     { id: "future", label: "Predicted Risks", icon: Waypoints },
     { id: "messages", label: "Teacher Messages", icon: MessagesSquare },
   ],
   admin: [
     { id: "overview", label: "School Intelligence", icon: LayoutDashboard },
+    { id: "pulse", label: "Live Pulse", icon: Radio },
     { id: "heatmap", label: "Risk Heatmaps", icon: Activity },
     { id: "forecast", label: "Failure Forecast", icon: Waypoints },
     { id: "teachers", label: "Teacher Impact", icon: GraduationCap },
