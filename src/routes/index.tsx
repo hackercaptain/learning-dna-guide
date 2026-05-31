@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/app/AppShell";
+import { KairosApp } from "@/components/kairos/KairosApp";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Orbit — Early Intervention OS for Schools" },
-      { name: "description", content: "AI-powered platform that predicts learning failure before it happens and guides teachers, students, parents, and schools to the fastest intervention." },
-      { property: "og:title", content: "Orbit" },
-      { property: "og:description", content: "Predict learning failure before it happens." },
+      { title: "Kairos — Right-moment learning" },
+      { name: "description", content: "Kairos analyzes student reasoning in real time, surfaces learning gaps the moment they form, and tells teachers exactly what to focus on tomorrow." },
+      { property: "og:title", content: "Kairos" },
+      { property: "og:description", content: "Find the learning gap the moment it forms." },
     ],
   }),
-  component: () => <AppShell />,
+  component: () => <KairosApp />,
 });
