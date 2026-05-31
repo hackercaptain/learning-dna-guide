@@ -6,12 +6,16 @@ import {
   StudentOverview, MistakeDNAReport, FutureFailureTimeline, PeerCircle, VoiceReasoning,
   ParentOverview, AdminOverview
 } from "./Views";
+import { ActionFeed, DailyPlan, LivePulse } from "./NewViews";
 import { Search, Bell, Command, Brain, Menu } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV_LABELS: Record<string, string> = {
   overview: "Overview",
+  inbox: "Smart Inbox",
+  pulse: "Live Classroom Pulse",
+  plan: "Today's Plan",
   twin: "Classroom Digital Twin",
   risk: "Student Risk Table",
   bridge: "Bridge Lesson AI",
@@ -36,6 +40,8 @@ export function AppShell() {
     const key = `${role}:${activeView}`;
     switch (key) {
       case "teacher:overview": return <TeacherOverview />;
+      case "teacher:inbox": return <ActionFeed />;
+      case "teacher:pulse": return <LivePulse />;
       case "teacher:twin": return <ClassroomTwin />;
       case "teacher:risk": return <RiskTable />;
       case "teacher:bridge": return <BridgeLesson />;
@@ -43,17 +49,20 @@ export function AppShell() {
       case "teacher:upload": return <UploadZone />;
 
       case "student:overview": return <StudentOverview />;
+      case "student:plan": return <DailyPlan />;
       case "student:mistakes": return <MistakeDNAReport />;
       case "student:future": return <FutureFailureTimeline />;
       case "student:peers": return <PeerCircle />;
       case "student:voice": return <VoiceReasoning />;
 
       case "parent:overview": return <ParentOverview />;
+      case "parent:inbox": return <ActionFeed />;
       case "parent:gaps": return <MistakeDNAReport />;
       case "parent:future": return <FutureFailureTimeline />;
       case "parent:messages": return <ParentOverview />;
 
       case "admin:overview": return <AdminOverview />;
+      case "admin:pulse": return <LivePulse />;
       case "admin:heatmap": return <AdminOverview />;
       case "admin:forecast": return <AdminOverview />;
       case "admin:teachers": return <AdminOverview />;
@@ -114,10 +123,10 @@ export function AppShell() {
 function MobileNav({ close }: { close: () => void }) {
   const { role, setRole, activeView, setActiveView } = useApp();
   const items: Record<string, string[]> = {
-    teacher: ["overview","twin","risk","bridge","silent","upload"],
-    student: ["overview","mistakes","future","peers","voice"],
-    parent: ["overview","gaps","future","messages"],
-    admin: ["overview","heatmap","forecast","teachers"],
+    teacher: ["overview","inbox","pulse","twin","risk","bridge","silent","upload"],
+    student: ["overview","plan","mistakes","future","peers","voice"],
+    parent: ["overview","inbox","gaps","future","messages"],
+    admin: ["overview","pulse","heatmap","forecast","teachers"],
   };
   return (
     <div className="space-y-3">
