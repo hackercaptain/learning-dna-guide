@@ -490,3 +490,80 @@ function MetricCard({
     </motion.div>
   );
 }
+
+/* ───────── Gap distribution pie chart ───────── */
+const PIE_COLORS = [
+  "var(--warning)", "var(--risk)", "var(--info)", "var(--primary)", "var(--success)", "var(--dna-6)",
+];
+
+function GapPieChart() {
+  const data = GAPS.map((g) => ({ name: g.concept, value: g.struggling, severity: g.severity }));
+  const total = data.reduce((s, d) => s + d.value, 0);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+      className="rounded-[2rem] glass-strong p-5 sm:p-6 shadow-soft grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-6 items-center"
+    >
+      <div>
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-[11px] uppercase tracking-[0.18em] font-semibold">
+          <BarChart3 className="h-3 w-3" /> Distribution
+        </div>
+        <h3 className="mt-3 font-display text-2xl leading-snug">Where the class is losing the most students</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Each slice represents the share of all struggling responses across concepts in the Photosynthesis unit.
+          Larger slices = bigger teaching opportunities.
+        </p>
+
+        <div className="mt-5 space-y-1.5">
+          {data.map((d, i) => {
+            const pct = Math.round((d.value / total) * 100);
+            return (
+              <div key={d.name} className="flex items-center gap-3 text-xs">
+                <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                <span className="flex-1 truncate text-foreground">{d.name}</span>
+                <span className="font-mono text-muted-foreground">{pct}%</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="h-[280px] sm:h-[320px] w-full">
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              innerRadius="55%"
+              outerRadius="88%"
+              paddingAngle={3}
+              stroke="var(--card)"
+              strokeWidth={3}
+              animationBegin={150}
+              animationDuration={900}
+            >
+              {data.map((_, i) => (
+                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                background: "color-mix(in oklab, var(--card) 92%, transparent)",
+                border: "1px solid var(--border)",
+                borderRadius: "14px",
+                fontSize: 12,
+                color: "var(--foreground)",
+              }}
+              formatter={(v: number, n: string) => [`${v} students (${Math.round((v / total) * 100)}%)`, n]}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </motion.div>
+  );
+}
+
