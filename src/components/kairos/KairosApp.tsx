@@ -349,11 +349,11 @@ function TeacherDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl border-2 border-warning/40 bg-warning/5 p-5 sm:p-6"
+        className="relative overflow-hidden rounded-[2rem] border-2 border-warning/40 bg-warning/5 p-5 sm:p-6 shadow-soft"
       >
         <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-warning/30 blur-3xl pointer-events-none" />
         <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-warning/20 text-warning grid place-items-center shrink-0">
+          <div className="h-14 w-14 rounded-full bg-warning/20 text-warning grid place-items-center shrink-0">
             <Flame className="h-7 w-7" />
           </div>
           <div className="flex-1">
@@ -365,15 +365,19 @@ function TeacherDashboard() {
           </div>
           <button
             onClick={() => toast.success("Recap added to tomorrow's plan", { description: topGap.concept })}
-            className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary text-primary-foreground font-medium px-5 py-3 text-sm shadow-glow hover:opacity-95 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-6 py-3 text-sm shadow-glow hover:opacity-95 whitespace-nowrap"
           >
             Plan recap <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </motion.div>
 
+      {/* Gap distribution pie */}
+      <GapPieChart />
+
+
       {/* Gap list */}
-      <div className="rounded-3xl glass-strong overflow-hidden">
+      <div className="rounded-[2rem] glass-strong overflow-hidden shadow-soft">
         <div className="flex items-center gap-2 p-5 border-b border-border/60">
           <BarChart3 className="h-4 w-4 text-primary" />
           <div>
@@ -443,7 +447,7 @@ function TeacherDashboard() {
                 <div className="flex sm:flex-col items-end gap-2 sm:justify-center">
                   <button
                     onClick={() => toast.success("Mini-lesson assigned", { description: g.concept })}
-                    className="text-xs px-3 py-2 rounded-lg border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors whitespace-nowrap"
+                    className="text-xs px-4 py-2 rounded-full border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-colors whitespace-nowrap"
                   >
                     Assign mini-lesson
                   </button>
@@ -473,11 +477,11 @@ function MetricCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
-      className="relative rounded-2xl glass-strong p-5 overflow-hidden"
+      className="relative rounded-[1.75rem] glass-strong p-5 overflow-hidden shadow-soft"
     >
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground">{label}</div>
-        <div className={cn("h-9 w-9 rounded-xl grid place-items-center", t)}>
+        <div className={cn("h-9 w-9 rounded-full grid place-items-center", t)}>
           <Icon className="h-4 w-4" />
         </div>
       </div>
