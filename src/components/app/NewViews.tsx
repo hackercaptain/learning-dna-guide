@@ -155,13 +155,13 @@ export function ActionFeed() {
                     {!isDone ? (
                       <>
                         <button
-                          onClick={() => setDone((d) => [...d, i.id])}
+                          onClick={() => { setDone((d) => [...d, i.id]); toast.success(i.cta, { description: i.title }); }}
                           className="text-xs px-3 py-2 rounded-lg gradient-primary text-primary-foreground font-medium inline-flex items-center gap-1.5 shadow-glow hover:opacity-90"
                         >
                           {i.cta} <ArrowUpRight className="h-3.5 w-3.5" />
                         </button>
                         <button
-                          onClick={() => setItems((arr) => arr.filter((x) => x.id !== i.id))}
+                          onClick={() => { setItems((arr) => arr.filter((x) => x.id !== i.id)); toast("Snoozed for 1 hour"); }}
                           className="text-xs px-2.5 py-2 rounded-lg border border-border/60 text-muted-foreground hover:text-foreground"
                         >
                           Snooze
