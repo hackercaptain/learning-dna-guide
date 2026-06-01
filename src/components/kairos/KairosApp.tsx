@@ -5,7 +5,11 @@ import {
   BarChart3, Users, Clock, Target, GraduationCap, BookOpen, ArrowRight, Flame, TrendingUp,
   Filter, Calendar as CalendarIcon,
 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, Area, AreaChart,
+} from "recharts";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -466,6 +470,13 @@ function TeacherDashboard() {
       {/* Gap distribution pie */}
       <GapPieChart data={sorted} subject={subject} range={range} />
 
+      {/* Per-student struggle + gap trend */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <StudentStruggleChart subject={subject} range={range} />
+        <GapTrendChart subject={subject} range={range} totalGaps={sorted.length} />
+      </div>
+
+
       {/* Gap list */}
       <div className="rounded-[2rem] glass-strong overflow-hidden shadow-soft">
         <div className="flex items-center gap-2 p-5 border-b border-border/60">
@@ -727,6 +738,142 @@ function GapPieChart({ data: gaps, subject, range }: { data: Gap[]; subject: Sub
               formatter={(v: number, n: string) => [`${v} students (${Math.round((v / total) * 100)}%)`, n]}
             />
           </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ───────── Student struggle bar chart ───────── */
+const STUDENT_NAMES = [
+  "Aarav","Priya","Rahul","Sneha","Diya","Karan","Ishita","Vihaan",
+  "Anaya","Kabir","Myra","Aryan","Saanvi","Reyansh","Pari","Ayaan",
+];
+
+function seedFrom(str: string) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function StudentStruggleChart({ subject, range }: { subject: Subject; range: DateRange }) {
+  const data = useMemo(() => {
+    const seed = seedFrom(subject + range);
+    const scale = range === "today" ? 0.35 : range === "week" ? 1 : 1.6;
+    return STUDENT_NAMES.slice(0, 10).map((name, i) => {
+      const r = Math.sin(seed + i * 13.37) * 10000;
+      const base = Math.abs(r - Math.floor(r));
+      const gaps = Math.max(1, Math.round((1 + base * 9) * scale));
+      const mastered = Math.max(2, Math.round((4 + (1 - base) * 8) * scale));
+      return { name, gaps, mastered };
+    }).sort((a, b) => b.gaps - a.gaps);
+  }, [subject, range]);
+
+  return (
+    <motion.div
+      key={`${subject}-${range}-students`}
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+      className="rounded-[2rem] glass-strong p-5 sm:p-6 shadow-soft"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-info/15 text-info px-3 py-1 text-[11px] uppercase tracking-[0.18em] font-semibold">
+            <Users className="h-3 w-3" /> Students
+          </div>
+          <h3 className="mt-3 font-display text-xl leading-snug">Who needs you most</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Gaps vs concepts mastered, per student · {SUBJECT_LABEL[subject]} · {RANGE_LABEL[range]}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 h-[280px] w-full">
+        <ResponsiveContainer>
+          <BarChart data={data} margin={{ top: 10, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="name" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickLine={false} axisLine={{ stroke: "var(--border)" }} />
+            <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickLine={false} axisLine={false} />
+            <Tooltip
+              cursor={{ fill: "color-mix(in oklab, var(--primary) 8%, transparent)" }}
+              contentStyle={{
+                background: "color-mix(in oklab, var(--card) 92%, transparent)",
+                border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, color: "var(--foreground)",
+              }}
+            />
+            <Legend wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }} iconType="circle" />
+            <Bar dataKey="gaps"     name="Learning gaps"   fill="var(--warning)" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="mastered" name="Concepts mastered" fill="var(--success)" radius={[8, 8, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ───────── Study gap trend chart ───────── */
+function GapTrendChart({ subject, range, totalGaps }: { subject: Subject; range: DateRange; totalGaps: number }) {
+  const data = useMemo(() => {
+    const seed = seedFrom(subject + range + "trend");
+    const len = range === "today" ? 8 : range === "week" ? 7 : 8;
+    const labels =
+      range === "today"
+        ? ["8a","10a","12p","1p","2p","3p","4p","5p"]
+        : range === "week"
+        ? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+        : ["W1","W2","W3","W4","W5","W6","W7","W8"];
+    const base = Math.max(3, totalGaps);
+    return labels.slice(0, len).map((label, i) => {
+      const r = Math.sin(seed + i * 7.91) * 10000;
+      const noise = Math.abs(r - Math.floor(r));
+      const wave = (Math.sin(i * 0.9) + 1) / 2;
+      const gaps      = Math.round(base * (0.55 + wave * 0.9 + noise * 0.4));
+      const resolved  = Math.round(base * (0.3  + (1 - wave) * 0.7 + noise * 0.3));
+      return { label, gaps, resolved };
+    });
+  }, [subject, range, totalGaps]);
+
+  return (
+    <motion.div
+      key={`${subject}-${range}-trend`}
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }}
+      className="rounded-[2rem] glass-strong p-5 sm:p-6 shadow-soft"
+    >
+      <div>
+        <div className="inline-flex items-center gap-2 rounded-full bg-warning/15 text-warning px-3 py-1 text-[11px] uppercase tracking-[0.18em] font-semibold">
+          <TrendingUp className="h-3 w-3" /> Study gap trend
+        </div>
+        <h3 className="mt-3 font-display text-xl leading-snug">Gaps surfaced vs resolved</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {SUBJECT_LABEL[subject]} · {RANGE_LABEL[range]}
+        </p>
+      </div>
+
+      <div className="mt-4 h-[280px] w-full">
+        <ResponsiveContainer>
+          <AreaChart data={data} margin={{ top: 10, right: 8, left: -16, bottom: 0 }}>
+            <defs>
+              <linearGradient id="grad-gaps" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="var(--warning)" stopOpacity={0.55} />
+                <stop offset="100%" stopColor="var(--warning)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="grad-resolved" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="var(--success)" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="var(--success)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickLine={false} axisLine={{ stroke: "var(--border)" }} />
+            <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickLine={false} axisLine={false} />
+            <Tooltip
+              contentStyle={{
+                background: "color-mix(in oklab, var(--card) 92%, transparent)",
+                border: "1px solid var(--border)", borderRadius: 14, fontSize: 12, color: "var(--foreground)",
+              }}
+            />
+            <Legend wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }} iconType="circle" />
+            <Area type="monotone" dataKey="gaps"     name="New gaps"      stroke="var(--warning)" strokeWidth={2.5} fill="url(#grad-gaps)" />
+            <Area type="monotone" dataKey="resolved" name="Resolved" stroke="var(--success)" strokeWidth={2.5} fill="url(#grad-resolved)" />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </motion.div>
