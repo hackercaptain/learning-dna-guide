@@ -476,6 +476,11 @@ function TeacherDashboard() {
         <GapTrendChart subject={subject} range={range} totalGaps={sorted.length} />
       </div>
 
+      {/* Sortable student list */}
+      <StudentList subject={subject} range={range} gaps={sorted} />
+
+
+
 
       {/* Gap list */}
       <div className="rounded-[2rem] glass-strong overflow-hidden shadow-soft">
