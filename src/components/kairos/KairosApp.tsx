@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain, AlertCircle, CheckCircle2, Send, Loader2, RotateCcw, Sparkles,
   BarChart3, Users, Clock, Target, GraduationCap, BookOpen, ArrowRight, Flame, TrendingUp,
-  Filter, Calendar as CalendarIcon,
+  Filter, Calendar as CalendarIcon, ChevronDown, ChevronUp, ArrowUpDown,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
