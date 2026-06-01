@@ -470,6 +470,13 @@ function TeacherDashboard() {
       {/* Gap distribution pie */}
       <GapPieChart data={sorted} subject={subject} range={range} />
 
+      {/* Per-student struggle + gap trend */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <StudentStruggleChart subject={subject} range={range} />
+        <GapTrendChart subject={subject} range={range} totalGaps={sorted.length} />
+      </div>
+
+
       {/* Gap list */}
       <div className="rounded-[2rem] glass-strong overflow-hidden shadow-soft">
         <div className="flex items-center gap-2 p-5 border-b border-border/60">
