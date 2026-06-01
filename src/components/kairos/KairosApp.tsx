@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain, AlertCircle, CheckCircle2, Send, Loader2, RotateCcw, Sparkles,
   BarChart3, Users, Clock, Target, GraduationCap, BookOpen, ArrowRight, Flame, TrendingUp,
-  Filter, Calendar as CalendarIcon,
+  Filter, Calendar as CalendarIcon, ChevronDown, ChevronUp, ArrowUpDown,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -476,6 +476,11 @@ function TeacherDashboard() {
         <GapTrendChart subject={subject} range={range} totalGaps={sorted.length} />
       </div>
 
+      {/* Sortable student list */}
+      <StudentList subject={subject} range={range} gaps={sorted} />
+
+
+
 
       {/* Gap list */}
       <div className="rounded-[2rem] glass-strong overflow-hidden shadow-soft">
@@ -880,3 +885,289 @@ function GapTrendChart({ subject, range, totalGaps }: { subject: Subject; range:
   );
 }
 
+
+/* ───────── Sortable student list ───────── */
+type SortKey = "name" | "gaps" | "mastery" | "risk";
+type SortDir = "asc" | "desc";
+
+type StudentRow = {
+  name: string;
+  gaps: number;
+  mastery: number; // 0-100
+  risk: "high" | "med" | "low";
+  topGaps: { concept: string; subject: Exclude<Subject, "all">; severity: Gap["severity"] }[];
+};
+
+function buildInterventions(
+  row: StudentRow,
+  range: DateRange,
+): { title: string; detail: string; tone: "warning" | "info" | "success" }[] {
+  const top = row.topGaps[0];
+  const second = row.topGaps[1];
+  const horizon =
+    range === "today" ? "today's exit ticket" : range === "week" ? "this week" : "this unit";
+  const out: { title: string; detail: string; tone: "warning" | "info" | "success" }[] = [];
+  if (top) {
+    out.push({
+      title: `15-min bridge lesson · ${top.concept}`,
+      detail: `Walk ${row.name} through the core idea before ${horizon}, then re-quiz with 3 targeted questions.`,
+      tone: "warning",
+    });
+  }
+  if (second) {
+    out.push({
+      title: `Peer-pair on ${second.concept}`,
+      detail: `Pair with a classmate who's mastered ${second.concept} for a 10-min explain-back.`,
+      tone: "info",
+    });
+  }
+  out.push({
+    title: row.risk === "high" ? "1:1 check-in" : "Confidence nudge",
+    detail:
+      row.risk === "high"
+        ? `Short private check-in — ${row.name}'s gaps are compounding. Confirm understanding before next assessment.`
+        : `Send an encouragement note highlighting ${row.mastery}% mastery so far. Keep momentum.`,
+    tone: row.risk === "high" ? "warning" : "success",
+  });
+  return out;
+}
+
+function StudentList({
+  subject,
+  range,
+  gaps,
+}: {
+  subject: Subject;
+  range: DateRange;
+  gaps: Gap[];
+}) {
+  const [sortKey, setSortKey] = useState<SortKey>("gaps");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const rows = useMemo<StudentRow[]>(() => {
+    const pool = gaps.length ? gaps : [];
+    const seed = seedFrom(subject + range);
+    const scale = range === "today" ? 0.35 : range === "week" ? 1 : 1.6;
+    return STUDENT_NAMES.map((name, i) => {
+      const r = Math.abs(Math.sin(seed + i * 17.91));
+      const gapCount = Math.max(1, Math.round((1 + r * 9) * scale));
+      const mastery = Math.round(40 + (1 - r) * 55);
+      const risk: StudentRow["risk"] = mastery < 55 ? "high" : mastery < 75 ? "med" : "low";
+      // Deterministically pick top concepts for this student from the filtered pool
+      const offset = seedFrom(name + subject + range) % Math.max(1, pool.length);
+      const topGaps = pool.length
+        ? Array.from({ length: Math.min(3, pool.length) }, (_, k) => {
+            const g = pool[(offset + k) % pool.length];
+            return { concept: g.concept, subject: g.subject, severity: g.severity };
+          })
+        : [];
+      return { name, gaps: gapCount, mastery, risk, topGaps };
+    });
+  }, [subject, range, gaps]);
+
+  const sorted = useMemo(() => {
+    const arr = [...rows];
+    const dir = sortDir === "asc" ? 1 : -1;
+    const riskRank = { high: 3, med: 2, low: 1 } as const;
+    arr.sort((a, b) => {
+      switch (sortKey) {
+        case "name": return a.name.localeCompare(b.name) * dir;
+        case "gaps": return (a.gaps - b.gaps) * dir;
+        case "mastery": return (a.mastery - b.mastery) * dir;
+        case "risk": return (riskRank[a.risk] - riskRank[b.risk]) * dir;
+      }
+    });
+    return arr;
+  }, [rows, sortKey, sortDir]);
+
+  function toggleSort(k: SortKey) {
+    if (k === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(k);
+      setSortDir(k === "name" ? "asc" : "desc");
+    }
+  }
+
+  const SortHeader = ({ k, label, align = "left" }: { k: SortKey; label: string; align?: "left" | "right" }) => (
+    <button
+      onClick={() => toggleSort(k)}
+      className={cn(
+        "inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] font-semibold text-muted-foreground hover:text-foreground transition-colors",
+        align === "right" && "justify-end w-full",
+      )}
+    >
+      {label}
+      {sortKey === k ? (
+        sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-50" />
+      )}
+    </button>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+      className="rounded-[2rem] glass-strong shadow-soft overflow-hidden"
+    >
+      <div className="flex items-start justify-between gap-3 p-5 sm:p-6 border-b border-border/60">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary/15 text-primary px-3 py-1 text-[11px] uppercase tracking-[0.18em] font-semibold">
+            <Users className="h-3 w-3" /> Student roster
+          </div>
+          <h3 className="mt-3 font-display text-xl leading-snug">Click a student to see their gaps</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sort by any column · {SUBJECT_LABEL[subject]} · {RANGE_LABEL[range]}
+          </p>
+        </div>
+        <div className="hidden sm:inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+          <Filter className="h-3 w-3" /> {sorted.length} students
+        </div>
+      </div>
+
+      {/* Column headers */}
+      <div className="hidden sm:grid grid-cols-[1.5fr_0.8fr_1fr_0.8fr_28px] gap-3 px-5 sm:px-6 py-3 bg-muted/30 border-b border-border/60">
+        <SortHeader k="name" label="Student" />
+        <SortHeader k="gaps" label="Gaps" align="right" />
+        <SortHeader k="mastery" label="Mastery" align="right" />
+        <SortHeader k="risk" label="Risk" align="right" />
+        <span />
+      </div>
+
+      <div className="divide-y divide-border/60">
+        {sorted.map((row) => {
+          const isOpen = openId === row.name;
+          const interventions = buildInterventions(row, range);
+          return (
+            <div key={row.name}>
+              <button
+                onClick={() => setOpenId(isOpen ? null : row.name)}
+                className={cn(
+                  "w-full text-left grid grid-cols-[1.5fr_0.8fr_1fr_0.8fr_28px] gap-3 items-center px-5 sm:px-6 py-3.5 hover:bg-primary/5 transition-colors",
+                  isOpen && "bg-primary/5",
+                )}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-9 w-9 rounded-full gradient-primary text-primary-foreground grid place-items-center font-semibold text-sm shrink-0">
+                    {row.name[0]}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm truncate">{row.name}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {row.topGaps[0]?.concept ?? "No active gaps"}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right text-sm font-mono tabular-nums">{row.gaps}</div>
+                <div className="flex items-center justify-end gap-2">
+                  <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full",
+                        row.mastery >= 75 ? "bg-success" : row.mastery >= 55 ? "bg-info" : "bg-warning",
+                      )}
+                      style={{ width: `${row.mastery}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-mono w-8 text-right">{row.mastery}%</span>
+                </div>
+                <div className="flex justify-end">
+                  <span className={cn(
+                    "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                    row.risk === "high" && "bg-warning/15 text-warning",
+                    row.risk === "med" && "bg-info/15 text-info",
+                    row.risk === "low" && "bg-success/15 text-success",
+                  )}>
+                    {row.risk}
+                  </span>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+              </button>
+
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    key="detail"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.35, ease: "easeOut" }}
+                    className="overflow-hidden bg-muted/20 border-t border-border/40"
+                  >
+                    <div className="px-5 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+                      {/* Top learning gaps */}
+                      <div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-warning font-semibold inline-flex items-center gap-1.5">
+                          <AlertCircle className="h-3 w-3" /> Top learning gaps
+                        </div>
+                        <ul className="mt-3 space-y-2">
+                          {row.topGaps.length === 0 && (
+                            <li className="text-xs text-muted-foreground">No gaps in this view.</li>
+                          )}
+                          {row.topGaps.map((g) => (
+                            <li
+                              key={g.concept}
+                              className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background/50 px-3 py-2.5"
+                            >
+                              <span className={cn(
+                                "h-2 w-2 rounded-full shrink-0",
+                                g.severity === "high" && "bg-warning",
+                                g.severity === "med" && "bg-info",
+                                g.severity === "low" && "bg-success",
+                              )} />
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-medium truncate">{g.concept}</div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {SUBJECT_LABEL[g.subject]} · {g.severity === "high" ? "Critical" : g.severity === "med" ? "Watch" : "Solid"}
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Recommended interventions */}
+                      <div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-primary font-semibold inline-flex items-center gap-1.5">
+                          <Sparkles className="h-3 w-3" /> Recommended interventions
+                        </div>
+                        <ul className="mt-3 space-y-2">
+                          {interventions.map((it, idx) => (
+                            <li
+                              key={idx}
+                              className="rounded-2xl border border-border/60 bg-background/50 px-3 py-2.5"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className={cn(
+                                  "h-6 w-6 rounded-full grid place-items-center shrink-0",
+                                  it.tone === "warning" && "bg-warning/15 text-warning",
+                                  it.tone === "info" && "bg-info/15 text-info",
+                                  it.tone === "success" && "bg-success/15 text-success",
+                                )}>
+                                  {it.tone === "warning" ? <Flame className="h-3 w-3" /> : it.tone === "info" ? <Users className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                                </span>
+                                <div className="text-sm font-medium">{it.title}</div>
+                              </div>
+                              <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed pl-8">{it.detail}</p>
+                            </li>
+                          ))}
+                        </ul>
+                        <button
+                          onClick={() => toast.success(`Plan assigned to ${row.name}`, { description: interventions[0]?.title })}
+                          className="mt-3 inline-flex items-center gap-2 rounded-full gradient-primary text-primary-foreground font-medium px-5 py-2.5 text-xs shadow-glow hover:opacity-95"
+                        >
+                          Assign full plan <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
